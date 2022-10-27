@@ -1,5 +1,5 @@
 '''
-Programa utilizado para obtener las reviews de la página web RAWG.io
+Programa utilizado para obtener las reviews de la pagina web RAWG.io
 - Se extraen los datos necesarios de las reviews
 - Se generan ficheros de 50000 reviews
 - Se cargan en un bucket de S3
@@ -9,10 +9,10 @@ Programa utilizado para obtener las reviews de la página web RAWG.io
 # Cargamos las librerias necesarias
 from math import ceil
 from configparser import ConfigParser
+import warnings
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import pandas as pd
-import warnings
 from bs4 import BeautifulSoup
 import boto3
 
@@ -63,7 +63,7 @@ print('Conectado a S3')
 
 # %%
 # Comprobamos los archivos de reviews ya disponibles
-# En caso de no haber ninguno, se comenzará la extracción desde la primera
+# En caso de no haber ninguno, se comenzara la extraccion desde la primera
 # review disponible
 av_files = [
     obj.key for obj in bucket.objects.filter(Prefix=FOLDER)
@@ -76,7 +76,7 @@ if len(av_files) == 0:
         .get(f'{REVIEW_URL}?ordering=id')
         .json()['results'][0]['id']
         )
-    append_first = False
+    APPEND_FIRST = False
 else:
     final_review_file = av_files[-1]
     final_file = pd.read_feather(
@@ -88,7 +88,7 @@ else:
             }
         )
     start_review = int(final_file.iloc[-1]['id']+1)
-    append_first = True
+    APPEND_FIRST = True
 
 print(f'Primera review: {start_review}')
 
@@ -123,18 +123,21 @@ for review_id in range(start_review, final_review+1):
         print(review_id)
     if review_id % N_REVIEWS == 0 or review_id == final_review:
         reviews_df = pd.DataFrame.from_records(reviews)
-        if append_first:
+        if APPEND_FIRST:
             reviews_df = (
                 pd.concat([final_file, reviews_df])
                 .reset_index(drop=True)
                 .astype(str)
                 )
-            append_first = False
+            APPEND_FIRST = False
         top_name = int(ceil(review_id/N_REVIEWS)*N_REVIEWS)
         low_name = top_name - (N_REVIEWS-1)
         try:
             reviews_df.to_feather(
-                f'{BUCKET_S3}/{FOLDER}reviews_{low_name}_{top_name}.feather',
+                (
+                    f'{BUCKET_S3}/{FOLDER}reviews_{low_name:07d}_'
+                    f'{top_name:07d}.feather'
+                    ),
                 compression='lz4',
                 storage_options={
                     'key': AWS_ACCESS_KEY_ID,
@@ -144,8 +147,8 @@ for review_id in range(start_review, final_review+1):
                 )
         except:
             reviews_df.to_feather(
-                f'reviews_{low_name}_{top_name}.feather',
+                f'reviews_{low_name:07d}_{top_name:07d}.feather',
                 compression='lz4'
-                )            
+                )
         print(f'reviews_{low_name}_{top_name} creado')
         reviews = []

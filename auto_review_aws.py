@@ -9,10 +9,10 @@ Programa utilizado para obtener las reviews de la página web RAWG.io
 # Cargamos las librerias necesarias
 from math import ceil
 from configparser import ConfigParser
+import warnings
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import pandas as pd
-import warnings
 from bs4 import BeautifulSoup
 import boto3
 
@@ -69,12 +69,12 @@ if len(av_files) == 0:
         .get(f'{REVIEW_URL}?ordering=id')
         .json()['results'][0]['id']
         )
-    append_first = False
+    APPEND_FIRST = False
 else:
     final_review_file = av_files[-1]
     final_file = pd.read_feather(f'{BUCKET_S3}/{final_review_file}')
     start_review = int(final_file.iloc[-1]['id']+1)
-    append_first = True
+    APPEND_FIRST = True
 
 print(f'Primera review: {start_review}')
 
@@ -107,17 +107,20 @@ for review_id in range(start_review, final_review+1):
         pass
     if review_id % N_REVIEWS == 0 or review_id == final_review:
         reviews_df = pd.DataFrame.from_records(reviews)
-        if append_first:
+        if APPEND_FIRST:
             reviews_df = (
                 pd.concat([final_file, reviews_df])
                 .reset_index(drop=True)
                 .astype(str)
                 )
-            append_first = False
+            APPEND_FIRST = False
         top_name = int(ceil(review_id/N_REVIEWS)*N_REVIEWS)
         low_name = top_name - (N_REVIEWS-1)
         reviews_df.to_feather(
-            f'{BUCKET_S3}/{FOLDER}reviews_{low_name}_{top_name}.feather',
+            (
+                f'{BUCKET_S3}/{FOLDER}reviews_{low_name:07d}_{top_name:07d}'
+                '.feather'
+                ),
             compression='lz4'
             )
         print(f'reviews_{low_name}_{top_name} creado')
