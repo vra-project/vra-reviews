@@ -6,7 +6,7 @@ Programa utilizado para obtener las reviews de la pagina web RAWG.io
 '''
 
 # %%
-# Cargamos las librerias necesarias
+# Se cargan las librerias necesarias
 from math import ceil
 from configparser import ConfigParser
 import warnings
@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 import boto3
 
 # %%
-# Cargamos las credenciales de AWS
+# Se cargan las credenciales de AWS
 
 config = ConfigParser()
 config.read('secrets.toml', encoding='utf-8')
@@ -35,8 +35,7 @@ N_REVIEWS = 50000
 warnings.filterwarnings('ignore')
 
 # %%
-
-# Definimos una sesion para realizar una serie de reintentos en caso de fallos
+# Se define una sesion para realizar una serie de reintentos en caso de fallos
 # a la hora de consultar las distintas urls utilizadas
 session = requests.Session()
 retries = Retry(
@@ -47,7 +46,7 @@ retries = Retry(
 session.mount('https://', HTTPAdapter(max_retries=retries))
 
 # %%
-# Realizamos la conexion con S3
+# Se conecta con S3
 bucket = (
     boto3.resource(
         's3',
@@ -62,7 +61,7 @@ bucket = (
 print('Conectado a S3')
 
 # %%
-# Comprobamos los archivos de reviews ya disponibles
+# Se comprueban los archivos de reviews ya disponibles
 # En caso de no haber ninguno, se comenzara la extraccion desde la primera
 # review disponible
 av_files = [
@@ -93,7 +92,7 @@ else:
 print(f'Primera review: {start_review}')
 
 # %%
-# Obtenemos la ultima review disponible en RAWG
+# Se obtiene la ultima review disponible en RAWG
 final_review = (
     session
     .get(f'{REVIEW_URL}?ordering=-id')
@@ -103,7 +102,7 @@ final_review = (
 print(f'Ultima review: {final_review}')
 
 # %%
-# Nos quedamos con la informacion relevante de todas las reviews a obtener
+# Se obtiene la informacion relevante de todas las reviews
 # Se crearan archivos cada 50000 reviews
 
 reviews = []
