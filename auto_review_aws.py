@@ -72,7 +72,7 @@ if len(av_files) == 0:
 else:
     final_review_file = av_files[-1]
     final_file = pd.read_feather(f'{BUCKET_S3}/{final_review_file}')
-    start_review = int(final_file.iloc[-1]['id']+1)
+    start_review = int(final_file.iloc[-1]['id'])+1
     APPEND_FIRST = True
 
 print(f'Primera review: {start_review}')

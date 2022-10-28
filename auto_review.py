@@ -86,7 +86,7 @@ else:
             'token': AWS_SESSION_TOKEN
             }
         )
-    start_review = int(final_file.iloc[-1]['id']+1)
+    start_review = int(final_file.iloc[-1]['id'])+1
     APPEND_FIRST = True
 
 print(f'Primera review: {start_review}')
